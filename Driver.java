@@ -18,6 +18,11 @@ public class Driver {
     printResults(calc.CalcPrice(0.10, 0, 500, 0.10), 500.0000000);
     printResults(calc.CalcPrice(0.10, 10, 0.0, 0.10), 0.0000000);
 
+    System.out.println("\n=====================  Calc Yield  =====================");
+    // coupon, years, face, price
+    printResults(calc.CalcYield(0.10, 5, 1000, 832.4), 0.1499974);
+    printResults(calc.CalcYield(0.10, 5, 1000, 1000), 0.1000000);
+    printResults(calc.CalcYield(0.10, 5, 1000, 1079.85), 0.080010);
 
   }
 

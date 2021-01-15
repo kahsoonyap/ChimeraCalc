@@ -16,8 +16,13 @@ public class BondYieldCalculator {
     return price.doubleValue();
   }
 
+  // http://www.columbia.edu/~ks20/FE-Notes/4700-07-Notes-bonds.pdf
+  // https://financeformulas.net/Yield_to_Maturity.html
+  // http://phillipmfeldman.org/Python/roots/find_roots.html#:~:text=Abstract,the%20Newton%2DRaphson%20method).
   public double CalcYield(double coupon, int years, double face, double price) {
-    return 0.0;
+    BigDecimal yield = new BigDecimal((calcCoupon(coupon, face) + (face - price) / years) / ((face + price) / 2));
+    yield = yield.setScale(DECIMAL_ACCURACY, RoundingMode.HALF_UP);
+    return yield.doubleValue();
   }
 
 
