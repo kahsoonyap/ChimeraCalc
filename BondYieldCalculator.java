@@ -5,37 +5,55 @@ import java.math.RoundingMode;
 
 public class BondYieldCalculator {
   private static final int DECIMAL_ACCURACY = 7;
-  private HashMap<List, HashMap<Integer, Double>> memo;
+  private static final double ACCURACY = 0.0000001;
+  // key: list(CF, rate)
+  // val: HashMap<year, price>
+  private HashMap<List, HashMap<Integer, Double>> couponMemo;
+  // key: rate
+  // val: HashMap<year, (1/r)^year>
+  private HashMap<Double, HashMap<Integer, Double>> discountMemo;
   public BondYieldCalculator() {
-    // face -> coupon -> rate -> price
-    // HashMap<double, HashMap<double, <HashMap<double, HashMap<int, double>>>>> memo = new HashMap<>();
-    memo = new HashMap<List, HashMap<Integer, Double>>();
+    couponMemo = new HashMap<List, HashMap<Integer, Double>>();
+    discountMemo = new HashMap<Double, HashMap<Integer, Double>>();
   }
 
   // http://www.columbia.edu/~ks20/FE-Notes/4700-07-Notes-bonds.pdf
   // https://financeformulas.net/Yield_to_Maturity.html
   // http://phillipmfeldman.org/Python/roots/find_roots.html#:~:text=Abstract,the%20Newton%2DRaphson%20method).
   // https://www.sciencedirect.com/science/article/pii/S0893965903901194#:~:text=Standard%20text%20books%20in%20numerical,the%20secant%20method%20becomes%20linear.
+  // why guess is 0+
+  // https://www.investopedia.com/ask/answers/062315/what-does-negative-bond-yield-mean.asp#:~:text=Since%20the%20YTM%20calculation%20incorporates,sufficiently%20outweigh%20the%20initial%20investment.
   public double CalcYield(double coupon, int years, double face, double price) {
-    // BigDecimal yield = new BigDecimal((calcCoupon(coupon, face) + (face - price) / years) / ((face + price) / 2));
-    // yield = yield.setScale(DECIMAL_ACCURACY, RoundingMode.HALF_UP);
-    // return yield.doubleValue();
-    double guessA = Double.MAX_VALUE;
-    double guessB = Double.MIN_VALUE;
-    double guessC = 0;
-
-    double priceA = calcPriceHelper(coupon, years, face, guessA);
-    double priceB = 0;
-
-    while (Math.abs(price - priceA) > 0.0000001) {
-      priceB = calcPriceHelper(coupon, years, face, guessB);
-      guessC = guessA - priceA * (guessB - guessA) / (priceB - priceA);
-      priceA = calcPriceHelper(coupon, years, face, guessA);
+    if (years == 0) {
+      return 0.0;
     }
+    double guessA = 5.0;
+    double guessB = 0.0;
+    double guessC = 0.0;
+    double priceA;
+    double priceB;
+    double priceC;
+    do {
+      priceA = calcPriceHelper(coupon, years, face, guessA) - price;
+      priceB = calcPriceHelper(coupon, years, face, guessB) - price;
 
-    BigDecimal yield = new BigDecimal(priceA);
-    yield = yield.setScale(DECIMAL_ACCURACY, RoundingMode.HALF_UP);
-    return yield.doubleValue();
+      guessC = (guessA + guessB) / 2;
+      priceC = calcPriceHelper(coupon, years, face, guessC) - price;
+
+      if (Math.abs(priceA) < ACCURACY) {
+        return guessA;
+      } else if (Math.abs(priceB) < ACCURACY) {
+        return guessB;
+      } else {
+        if (priceA * priceC < 0) {
+          guessB = guessC;
+        } else if (priceB * priceC < 0) {
+          guessA = guessC;
+        }
+      }
+    } while (Math.abs(priceC) >= ACCURACY);
+
+    return guessC;
   }
 
 
@@ -48,18 +66,12 @@ public class BondYieldCalculator {
   }
 
   private double calcPriceHelper(double coupon, int years, double face, double rate) {
-    if (!memo.containsKey(Arrays.asList(coupon, face, rate))) {
-      HashMap<Integer, Double> newRecord = new HashMap<Integer, Double>();
-      memo.put(Arrays.asList(coupon, face, rate), newRecord);
+    if (years == 0) {
+      return face;
     }
-    HashMap<Integer, Double> record = memo.get(Arrays.asList(coupon, face, rate));
-    if (!record.containsKey(years)) {
-      double principalPayment = calcPrincipalPayment(years, face, rate);
-      double totalCouponPayment = calcTotalCouponPayment(coupon, years, face, rate);
-      record.put(years, principalPayment + totalCouponPayment);
-    }
-
-    return record.get(years);
+    double principalPayment = calcPrincipalPayment(years, face, rate);
+    double totalCouponPayment = calcTotalCouponPayment(coupon, years, face, rate);
+    return principalPayment + totalCouponPayment;
   }
 
   private double calcPrincipalPayment(int years, double face, double rate) {
@@ -69,21 +81,50 @@ public class BondYieldCalculator {
   }
 
   private double calcTotalCouponPayment(double coupon, int years, double face, double rate) {
-    double total = 0;
-    double couponPayment = calcCoupon(coupon, face);
+    List key = Arrays.asList(coupon, face, rate);
+    double cf = calcCF(coupon, face);
 
-    for (int year = 1; year <= years; year++) {
-      total += couponPayment / calcDiscount(year, rate);
+    if (!couponMemo.containsKey(key)) {
+      HashMap newRecord = new HashMap<Integer, Double>();
+      newRecord.put(0, 0.0);
+      couponMemo.put(key, newRecord);
     }
 
-    return total;
+    HashMap record = couponMemo.get(key);
+    return calcCouponPayment(cf, years, rate, record);
+  }
+
+  private double calcCouponPayment(double cf, int years, double rate, HashMap<Integer, Double> memo) {
+    if (!memo.containsKey(years)) {
+      double previousCouponPayment = calcCouponPayment(cf, years - 1, rate, memo);
+      double currentCouponPayment = previousCouponPayment + cf / calcDiscount(years, rate);
+      memo.put(years, currentCouponPayment);
+    }
+    return memo.get(years);
   }
 
   private double calcDiscount(int year, double rate) {
-    return Math.pow((1.0 + rate), year);
+    // return Math.pow((1.0 + rate), year);
+    if (!discountMemo.containsKey(rate)) {
+      HashMap<Integer, Double> newRecord = new HashMap<Integer, Double>();
+      newRecord.put(0, 1.0);
+      discountMemo.put(rate, newRecord);
+    }
+
+    HashMap<Integer, Double> record = discountMemo.get(rate);
+    return calcDiscountHelper(year, rate, record);
   }
 
-  private double calcCoupon(double coupon, double face) {
+  private double calcDiscountHelper(int year, double rate, HashMap<Integer, Double> memo) {
+    if (!memo.containsKey(year)) {
+      double previousDiscount = calcDiscountHelper(year - 1, rate, memo);
+      double currentDiscount = previousDiscount * (1 + rate);
+      memo.put(year, currentDiscount);
+    }
+    return memo.get(year);
+  }
+
+  private double calcCF(double coupon, double face) {
     return coupon * face;
   }
 }

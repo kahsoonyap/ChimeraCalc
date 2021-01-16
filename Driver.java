@@ -13,34 +13,35 @@ public class Driver {
     System.out.println("=====================  Calc Price  =====================");
     // coupon, years, face, rate
     startTime = System.currentTimeMillis();
-    printResults(calc.CalcPrice(0.10, 5, 1000, 0.15), 832.3922451);
-    printResults(calc.CalcPrice(0.15, 5, 1000, 0.15), 1000.0000000);
-    printResults(calc.CalcPrice(0.10, 5, 1000, 0.08), 1079.8542007);
+    printResults(calc.CalcPrice(0.10, 5, 1000, 0.15), 832.3922451, 0.0);
+    printResults(calc.CalcPrice(0.15, 5, 1000, 0.15), 1000.0000000, 0.0);
+    printResults(calc.CalcPrice(0.10, 5, 1000, 0.08), 1079.8542007, 0.0);
 
-    printResults(calc.CalcPrice(0.0, 10, 500, 0.10), 192.7716447);
-    printResults(calc.CalcPrice(0.10, 10, 500, 0.0), 1000.0000000);
-    printResults(calc.CalcPrice(0.10, 0, 500, 0.10), 500.0000000);
-    printResults(calc.CalcPrice(0.10, 10, 0.0, 0.10), 0.0000000);
+    printResults(calc.CalcPrice(0.0, 10, 500, 0.10), 192.7716447, 0.0);
+    printResults(calc.CalcPrice(0.10, 10, 500, 0.0), 1000.0000000, 0.0);
+    printResults(calc.CalcPrice(0.10, 0, 500, 0.10), 500.0000000, 0.0); // check 0 year edge case
+    printResults(calc.CalcPrice(0.10, 10, 0.0, 0.10), 0.0000000, 0.0);
     endTime = System.currentTimeMillis();
     timeDiff(startTime, endTime);
 
     System.out.println("=====================  Calc Yield  =====================");
     // coupon, years, face, price
-    // printResults(calc.CalcYield(0.10, 5, 1000, 832.4), 0.1499974);
-    // printResults(calc.CalcYield(0.10, 5, 1000, 1000), 0.1000000);
-    // printResults(calc.CalcYield(0.10, 5, 1000, 1079.85), 0.080010);
-    HashMap<List, HashMap<Integer, Double>> memo = new HashMap<List, HashMap<Integer, Double>>();
-    HashMap<Integer, Double> yearPriceMap = new HashMap<Integer, Double>();
-    memo.put(Arrays.asList(0.10, 1000.0, 0.15), yearPriceMap);
-    System.out.println(memo.containsKey(Arrays.asList(0.10, 1000.0, 0.15)));
-    HashMap<Integer, Double> temp = memo.get(Arrays.asList(0.10, 1000.0, 0.15));
-    System.out.println(temp);
-    temp.put(0, 1000.0);
-    System.out.println(memo.get(Arrays.asList(0.10, 1000.0, 0.15)).get(0));
+    startTime = System.currentTimeMillis();
+
+    printResults(calc.CalcYield(0.10, 5, 1000, 832.4), 0.1499974, 0.00001);
+    printResults(calc.CalcYield(0.10, 5, 1000, 1000), 0.1000000, 0.00001);
+    printResults(calc.CalcYield(0.10, 5, 1000, 1079.85), 0.080010, 0.00001);
+
+    printResults(calc.CalcYield(0.0, 10, 500, 192.7716447), 0.10, 0.00001);
+    printResults(calc.CalcYield(0.10, 10, 500, 1000.0), 0.0, 0.00001);
+    printResults(calc.CalcYield(0.10, 0, 500, 500.0), 0.0, 0.00001); // ?
+    endTime = System.currentTimeMillis();
+    timeDiff(startTime, endTime);
+    
   }
 
-  public static void printResults(double result, double expected) {
-    if (result == expected) {
+  public static void printResults(double result, double expected, double error) {
+    if (Math.abs(result - expected) <= error) {
       System.out.print("O\t");
     } else{
       System.out.print("X\t");
