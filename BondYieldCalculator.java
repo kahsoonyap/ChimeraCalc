@@ -9,12 +9,8 @@ public class BondYieldCalculator {
   // key: list(CF, rate)
   // val: HashMap<year, price>
   private HashMap<List, HashMap<Integer, Double>> couponMemo;
-  // key: rate
-  // val: HashMap<year, (1/r)^year>
-  private HashMap<Double, HashMap<Integer, Double>> discountMemo;
   public BondYieldCalculator() {
     couponMemo = new HashMap<List, HashMap<Integer, Double>>();
-    discountMemo = new HashMap<Double, HashMap<Integer, Double>>();
   }
 
   // http://www.columbia.edu/~ks20/FE-Notes/4700-07-Notes-bonds.pdf
@@ -104,15 +100,7 @@ public class BondYieldCalculator {
   }
 
   private double calcDiscount(int year, double rate) {
-    // return Math.pow((1.0 + rate), year);
-    if (!discountMemo.containsKey(rate)) {
-      HashMap<Integer, Double> newRecord = new HashMap<Integer, Double>();
-      newRecord.put(0, 1.0);
-      discountMemo.put(rate, newRecord);
-    }
-
-    HashMap<Integer, Double> record = discountMemo.get(rate);
-    return calcDiscountHelper(year, rate, record);
+    return Math.pow((1.0 + rate), year);
   }
 
   private double calcDiscountHelper(int year, double rate, HashMap<Integer, Double> memo) {
