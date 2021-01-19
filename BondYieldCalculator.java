@@ -6,9 +6,20 @@ import java.math.RoundingMode;
 public class BondYieldCalculator {
   private static final int DECIMAL_ACCURACY = 7;
   private static final double ACCURACY = 0.0000001;
-  // key: list(CF, rate)
-  // val: HashMap<year, price>
+
+  /*
+   * Memo to keep track of the value of coupon payments
+   * made up until a specified year.
+   * Values here can then be added to the value of
+   * principal payments to get the price of a bond.
+   * key: list(C = cF, rate)
+   * val: HashMap<year, price>
+   */
   private HashMap<List, HashMap<Integer, Double>> couponMemo;
+
+  /**
+  * Sole constructor. Takes no params.
+  */
   public BondYieldCalculator() {
     couponMemo = new HashMap<List, HashMap<Integer, Double>>();
   }
@@ -19,27 +30,43 @@ public class BondYieldCalculator {
   // https://www.sciencedirect.com/science/article/pii/S0893965903901194#:~:text=Standard%20text%20books%20in%20numerical,the%20secant%20method%20becomes%20linear.
   // why guess is 0+
   // https://www.investopedia.com/ask/answers/062315/what-does-negative-bond-yield-mean.asp#:~:text=Since%20the%20YTM%20calculation%20incorporates,sufficiently%20outweigh%20the%20initial%20investment.
+
+  /**
+  * Calculates the yield of a bond using the bisection method given
+  * the coupon rate, the years to maturity, the face value, and
+  * the price of the bond. 
+  * @param  coupon coupon rate
+  * @param  years  number of years to maturity
+  * @param  face   face value
+  * @param  price  price of bond
+  * @return        yield of bond
+  */
   public double CalcYield(double coupon, int years, double face, double price) {
-    if (years == 0) {
-      return 0.0;
-    }
-    double guessA = 5.0;
-    double guessB = 0.0;
+    /* Special case year = 0: return 0.0 */
+    if (years == 0) { return 0.0; }
+
+    /* guess for what r might be */
+    double guessA = 5.0; /* r most likely will not be this high or higher */
+    double guessB = 0.0; /* If rate < 0 then bond holder would lose money */
     double guessC = 0.0;
+
     double priceA;
     double priceB;
     double priceC;
+
     do {
       priceA = calcPriceHelper(coupon, years, face, guessA) - price;
       priceB = calcPriceHelper(coupon, years, face, guessB) - price;
 
-      guessC = (guessA + guessB) / 2;
+      guessC = (guessA + guessB) / 2;                /* get mid point */
       priceC = calcPriceHelper(coupon, years, face, guessC) - price;
 
+      /* Check if calculated price is close enough to given price */
       if (Math.abs(priceA) < ACCURACY) {
         return guessA;
       } else if (Math.abs(priceB) < ACCURACY) {
         return guessB;
+      /* otherwise replace one of the guesses with the mid point and try again */
       } else {
         if (priceA * priceC < 0) {
           guessB = guessC;
@@ -60,9 +87,13 @@ public class BondYieldCalculator {
   * @param  years  number of years to maturity
   * @param  face   face value
   * @param  rate   discount rate
-  * @return        price
+  * @return        price of bond
   */
   public double CalcPrice(double coupon, int years, double face, double rate) {
+    /*
+     * Call helper method to calculate price.
+     * Use BigDecimal to remove values beyond 10e-7.
+     */
     double rawDouble = calcPriceHelper(coupon, years, face, rate);
     BigDecimal price = new BigDecimal(rawDouble);
     price = price.setScale(DECIMAL_ACCURACY, RoundingMode.HALF_UP);
@@ -139,8 +170,10 @@ public class BondYieldCalculator {
   */
   private double calcCouponPaymentValue(double cf, int years, double rate, HashMap<Integer, Double> memo) {
     /*
-     * Check if current year coupon payment was previously calculated.
-     * If not, calculate
+     * Check if total coupon payment up until years was previously calculated.
+     * If not, calculate it by taking the total for previous year and
+     * then adding to that the coupon payment for current year.
+     * Base case of year = 0, total paid = 0 added into the record on creation.
      */
     if (!memo.containsKey(years)) {
       double previousCouponPayment = calcCouponPaymentValue(cf, years - 1, rate, memo);
