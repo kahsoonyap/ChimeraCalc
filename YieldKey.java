@@ -23,6 +23,7 @@ public class YieldKey {
     }
   }
 
+  // https://stackoverflow.com/questions/113511/best-implementation-for-hashcode-method-for-a-collection
   @Override
   public int hashCode() {
     int hash = Long.hashCode(Double.doubleToLongBits(((coupon * 31 + years) * 31 + face) * 31 + price));
