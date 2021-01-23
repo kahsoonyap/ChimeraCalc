@@ -15,14 +15,14 @@ public class BondYieldCalculator {
    * key: list(C = cF, rate)
    * val: HashMap<year, price>
    */
-  private HashMap<List, HashMap<Integer, Double>> couponMemo;
+  private HashMap<CouponKey, HashMap<Integer, Double>> couponMemo;
   private HashMap<YieldKey, Double> yieldMemo;
 
   /**
   * Sole constructor. Takes no params.
   */
   public BondYieldCalculator() {
-    couponMemo = new HashMap<List, HashMap<Integer, Double>>();
+    couponMemo = new HashMap<CouponKey, HashMap<Integer, Double>>();
     yieldMemo = new HashMap<YieldKey, Double>();
   }
 
@@ -164,7 +164,7 @@ public class BondYieldCalculator {
   */
   private double calcTotalCouponPaymentValue(double coupon, int years, double face, double rate) {
     double cf = calcCF(coupon, face);
-    List key = Arrays.asList(cf, rate);
+    CouponKey key = new CouponKey(cf, rate);
 
     /*
      * Check if combination of coupon, face value, and rate
