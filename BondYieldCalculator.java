@@ -15,15 +15,15 @@ public class BondYieldCalculator {
    * key: list(C = cF, rate)
    * val: HashMap<year, price>
    */
-  private HashMap<List, HashMap<Integer, Double>> couponMemo;
-  private HashMap<List, Double> yieldMemo;
+  private HashMap<CouponKey, HashMap<Integer, Double>> couponMemo;
+  private HashMap<YieldKey, Double> yieldMemo;
 
   /**
   * Sole constructor. Takes no params.
   */
   public BondYieldCalculator() {
-    couponMemo = new HashMap<List, HashMap<Integer, Double>>();
-    yieldMemo = new HashMap<List, Double>();
+    couponMemo = new HashMap<CouponKey, HashMap<Integer, Double>>();
+    yieldMemo = new HashMap<YieldKey, Double>();
   }
 
   // http://www.columbia.edu/~ks20/FE-Notes/4700-07-Notes-bonds.pdf
@@ -46,8 +46,7 @@ public class BondYieldCalculator {
   * @return        yield of bond
   */
   public double CalcYield(double coupon, int years, double face, double price) {
-    List key = Arrays.asList(coupon, years, face, price);
-
+    YieldKey key = new YieldKey(coupon, years, face, price);
     /*
      * Check if combination seen before
      * if not, calculate result
@@ -165,7 +164,7 @@ public class BondYieldCalculator {
   */
   private double calcTotalCouponPaymentValue(double coupon, int years, double face, double rate) {
     double cf = calcCF(coupon, face);
-    List key = Arrays.asList(cf, rate);
+    CouponKey key = new CouponKey(cf, rate);
 
     /*
      * Check if combination of coupon, face value, and rate
