@@ -16,12 +16,14 @@ public class BondYieldCalculator {
    * val: HashMap<year, price>
    */
   private HashMap<List, HashMap<Integer, Double>> couponMemo;
+  private HashMap<List, Double> yieldMemo;
 
   /**
   * Sole constructor. Takes no params.
   */
   public BondYieldCalculator() {
     couponMemo = new HashMap<List, HashMap<Integer, Double>>();
+    yieldMemo = new HashMap<List, Double>();
   }
 
   // http://www.columbia.edu/~ks20/FE-Notes/4700-07-Notes-bonds.pdf
@@ -31,10 +33,12 @@ public class BondYieldCalculator {
   // why guess is 0+
   // https://www.investopedia.com/ask/answers/062315/what-does-negative-bond-yield-mean.asp#:~:text=Since%20the%20YTM%20calculation%20incorporates,sufficiently%20outweigh%20the%20initial%20investment.
 
+
+
   /**
   * Calculates the yield of a bond using the bisection method given
   * the coupon rate, the years to maturity, the face value, and
-  * the price of the bond. 
+  * the price of the bond.
   * @param  coupon coupon rate
   * @param  years  number of years to maturity
   * @param  face   face value
@@ -42,6 +46,28 @@ public class BondYieldCalculator {
   * @return        yield of bond
   */
   public double CalcYield(double coupon, int years, double face, double price) {
+    List key = Arrays.asList(coupon, years, face, price);
+
+    /*
+     * Check if combination seen before
+     * if not, calculate result
+     */
+    if (!yieldMemo.containsKey(key)) {
+      yieldMemo.put(key, yieldBisection(coupon, years, face, price));
+    }
+
+    return yieldMemo.get(key);
+  }
+
+  /**
+  * Use bisection method to find the yield.
+  * @param  coupon coupon rate
+  * @param  years  number of years to maturity
+  * @param  face   face value
+  * @param  price  price of bond
+  * @return        yield of bond
+  */
+  private double yieldBisection(double coupon, int years, double face, double price) {
     /* Special case year = 0: return 0.0 */
     if (years == 0) { return 0.0; }
 
@@ -138,8 +164,8 @@ public class BondYieldCalculator {
   * @return        value of coupon payment total
   */
   private double calcTotalCouponPaymentValue(double coupon, int years, double face, double rate) {
-    List key = Arrays.asList(coupon, face, rate);
     double cf = calcCF(coupon, face);
+    List key = Arrays.asList(cf, rate);
 
     /*
      * Check if combination of coupon, face value, and rate
