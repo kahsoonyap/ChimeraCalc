@@ -178,9 +178,9 @@ public class BondYieldCalculator {
   * @param  rate   discount rate
   * @return        formatted bond price
   */
-  public double prettyCalcPrice(double coupon, int years, double face, double rate) {
+  public String prettyCalcPrice(double coupon, int years, double face, double rate) {
     double price = CalcPrice(coupon, years, face, rate);
-    return stringify(yield, DECIMAL_ACCURACY);
+    return stringify(price, DECIMAL_ACCURACY);
   }
 
   /**
