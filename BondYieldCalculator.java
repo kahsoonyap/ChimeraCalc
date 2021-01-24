@@ -47,10 +47,7 @@ public class BondYieldCalculator {
   */
   public double CalcYield(double coupon, int years, double face, double price) {
     YieldKey key = new YieldKey(coupon, years, face, price);
-    /*
-     * Check if combination seen before
-     * if not, calculate result
-     */
+    /* Check if combination seen before and if not, calculate result */
     if (!yieldMemo.containsKey(key)) {
       yieldMemo.put(key, yieldBisection(coupon, years, face, price));
     }
@@ -72,36 +69,96 @@ public class BondYieldCalculator {
 
     /* guess for what r might be */
     double guessA = 5.0; /* r most likely will not be this high or higher */
-    double guessB = 0.0; /* If rate < 0 then bond holder would lose money */
+    double guessB = -1.0 + ACCURACY; /* rate = -1 is asymptotic and would give divide by 0 */
     double guessC = 0.0;
 
-    double priceA;
-    double priceB;
+    double priceA = calcPriceHelper(coupon, years, face, guessA) - price;
+    double priceB = calcPriceHelper(coupon, years, face, guessB) - price;
     double priceC;
 
-    do {
-      priceA = calcPriceHelper(coupon, years, face, guessA) - price;
-      priceB = calcPriceHelper(coupon, years, face, guessB) - price;
+    int direction = 1;
+    // System.out.printf("%f %f\n", guessA, guessB);
+    // System.out.printf("%f %f\n", priceA, priceB);
+    // System.out.println(priceA*priceB > 0);
+    /*
+    * Bisection requires f(a) and f(b) to have different signs.
+    * If the two have different signs, it will not work.
+    * If same sign, try to check other side of asymptote.
+    * Odd order will not work.
+    */
+    if (priceA * priceB > 0) {
+      if (years % 2 == 0) {
+        guessA = -5.0;
+        guessB = -1.0 - ACCURACY;       /* -1.0 will never have a value */
+        direction = -1;
+        // System.out.println("ga " + guessA);
+        // System.out.println("pa " + calcPriceHelper(coupon, years, face, guessA));
+        priceA = calcPriceHelper(coupon, years, face, guessA) - price;
+        priceB = calcPriceHelper(coupon, years, face, guessB) - price;
+      } else {
+        return Double.NEGATIVE_INFINITY;
+      }
+    }
 
-      guessC = (guessA + guessB) / 2;                /* get mid point */
-      priceC = calcPriceHelper(coupon, years, face, guessC) - price;
+    if(Math.abs(priceA) < ACCURACY) {
+      return guessA;
+    } else if (Math.abs(priceB) < ACCURACY) {
+      return guessB;
+    }
 
-      /* Check if calculated price is close enough to given price */
-      if (Math.abs(priceA) < ACCURACY) {
-        return guessA;
-      } else if (Math.abs(priceB) < ACCURACY) {
-        return guessB;
-      /* otherwise replace one of the guesses with the mid point and try again */
+    guessC = (guessA + guessB) / 2;                /* get mid point */
+    priceC = calcPriceHelper(coupon, years, face, guessC) - price;
+
+    int counter = 0;
+    while (Math.abs(priceC) >= ACCURACY ) {
+      // System.out.printf("%f %f %f\t", guessA, guessB, guessC);
+      // System.out.printf("%f %f %f\n", priceA, priceB, priceC);
+      if (Double.isNaN(priceB)) {
+        guessB += ACCURACY * direction;
+        priceB = calcPriceHelper(coupon, years, face, guessB) - price;
       } else {
         if (priceA * priceC < 0) {
           guessB = guessC;
+          priceB = priceC;
         } else if (priceB * priceC < 0) {
           guessA = guessC;
+          priceA = priceC;
         }
       }
-    } while (Math.abs(priceC) >= ACCURACY);
+      guessC = (guessA + guessB) / 2;                /* get mid point */
+      priceC = calcPriceHelper(coupon, years, face, guessC) - price;
+      counter++;
+    }
 
     return guessC;
+
+    // do {
+    //   priceA = calcPriceHelper(coupon, years, face, guessA) - price;
+    //   priceB = calcPriceHelper(coupon, years, face, guessB) - price;
+    //
+    //   guessC = (guessA + guessB) / 2;                /* get mid point */
+    //   priceC = calcPriceHelper(coupon, years, face, guessC) - price;
+    //
+    //   // System.out.printf("%f %f %f\t", guessA, guessB, guessC);
+    //   // System.out.printf("%f %f %f\n", priceA, priceB, priceC);
+    //
+    //   /* Check if calculated price is close enough to given price */
+    //   if (Math.abs(priceA) < ACCURACY) {
+    //     return guessA;
+    //   } else if (Math.abs(priceB) < ACCURACY) {
+    //     return guessB;
+    //   /* otherwise replace one of the guesses with the mid point and try again */
+    //   } else {
+    //     if (priceA * priceC < 0) {
+    //       guessB = guessC;
+    //     } else if (priceB * priceC < 0) {
+    //       guessA = guessC;
+    //     }
+    //   }
+    //   counter++;
+    // } while (Math.abs(priceC) >= ACCURACY && counter < 50);
+    //
+    // return guessC;
   }
 
   /**
@@ -126,13 +183,16 @@ public class BondYieldCalculator {
     return price.doubleValue();
   }
 
-  private double calcPriceHelper(double coupon, int years, double face, double rate) {
+  // return to private
+  public double calcPriceHelper(double coupon, int years, double face, double rate) {
     /* Special case when years = 0: return the face value */
     if (years == 0) { return face; }
 
     double totalCouponPayment = calcTotalCouponPaymentValue(coupon, years, face, rate);
     double principalPaymentValue = calcPrincipalPaymentValue(years, face, rate);
-
+    // System.out.println("cp " + totalCouponPayment);
+    // System.out.println("pp " + principalPaymentValue);
+    // System.out.println(totalCouponPayment + principalPaymentValue);
     return totalCouponPayment + principalPaymentValue;
   }
 
@@ -203,6 +263,9 @@ public class BondYieldCalculator {
     if (!memo.containsKey(years)) {
       double previousCouponPayment = calcCouponPaymentValue(cf, years - 1, rate, memo);
       double currentCouponPayment = previousCouponPayment + cf / calcValueModifier(years, rate);
+      // System.out.printf("%f %d %f %f \n", cf, years, rate, currentCouponPayment);
+      // System.out.println(years);
+      // System.out.println(currentCouponPayment);
       memo.put(years, currentCouponPayment);
     }
 
@@ -229,5 +292,20 @@ public class BondYieldCalculator {
   */
   private double calcCF(double coupon, double face) {
     return coupon * face;
+  }
+
+  public double roundValue(double value, int precision) {
+    BigDecimal val = new BigDecimal(value);
+    val = val.setScale(DECIMAL_ACCURACY, RoundingMode.HALF_UP);
+    return val.doubleValue();
+  }
+
+  public String prettyValue(double value, int precision) {
+    return String.format("%.7f", value);
+  }
+
+  public String stringify(double value, int precision) {
+    double val = roundValue(value, precision);
+    return prettyValue(val, precision);
   }
 }
