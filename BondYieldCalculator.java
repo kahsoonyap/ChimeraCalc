@@ -33,8 +33,6 @@ public class BondYieldCalculator {
   // why guess is 0+
   // https://www.investopedia.com/ask/answers/062315/what-does-negative-bond-yield-mean.asp#:~:text=Since%20the%20YTM%20calculation%20incorporates,sufficiently%20outweigh%20the%20initial%20investment.
 
-
-
   /**
   * Calculates the yield of a bond using the bisection method given
   * the coupon rate, the years to maturity, the face value, and
@@ -77,9 +75,7 @@ public class BondYieldCalculator {
     double priceC;
 
     int direction = 1;
-    // System.out.printf("%f %f\n", guessA, guessB);
-    // System.out.printf("%f %f\n", priceA, priceB);
-    // System.out.println(priceA*priceB > 0);
+
     /*
     * Bisection requires f(a) and f(b) to have different signs.
     * If the two have different signs, it will not work.
@@ -91,8 +87,6 @@ public class BondYieldCalculator {
         guessA = -5.0;
         guessB = -1.0 - ACCURACY;       /* -1.0 will never have a value */
         direction = -1;
-        // System.out.println("ga " + guessA);
-        // System.out.println("pa " + calcPriceHelper(coupon, years, face, guessA));
         priceA = calcPriceHelper(coupon, years, face, guessA) - price;
         priceB = calcPriceHelper(coupon, years, face, guessB) - price;
       } else {
@@ -111,8 +105,6 @@ public class BondYieldCalculator {
 
     int counter = 0;
     while (Math.abs(priceC) >= ACCURACY ) {
-      // System.out.printf("%f %f %f\t", guessA, guessB, guessC);
-      // System.out.printf("%f %f %f\n", priceA, priceB, priceC);
       if (Double.isNaN(priceB)) {
         guessB += ACCURACY * direction;
         priceB = calcPriceHelper(coupon, years, face, guessB) - price;
@@ -131,34 +123,19 @@ public class BondYieldCalculator {
     }
 
     return guessC;
+  }
 
-    // do {
-    //   priceA = calcPriceHelper(coupon, years, face, guessA) - price;
-    //   priceB = calcPriceHelper(coupon, years, face, guessB) - price;
-    //
-    //   guessC = (guessA + guessB) / 2;                /* get mid point */
-    //   priceC = calcPriceHelper(coupon, years, face, guessC) - price;
-    //
-    //   // System.out.printf("%f %f %f\t", guessA, guessB, guessC);
-    //   // System.out.printf("%f %f %f\n", priceA, priceB, priceC);
-    //
-    //   /* Check if calculated price is close enough to given price */
-    //   if (Math.abs(priceA) < ACCURACY) {
-    //     return guessA;
-    //   } else if (Math.abs(priceB) < ACCURACY) {
-    //     return guessB;
-    //   /* otherwise replace one of the guesses with the mid point and try again */
-    //   } else {
-    //     if (priceA * priceC < 0) {
-    //       guessB = guessC;
-    //     } else if (priceB * priceC < 0) {
-    //       guessA = guessC;
-    //     }
-    //   }
-    //   counter++;
-    // } while (Math.abs(priceC) >= ACCURACY && counter < 50);
-    //
-    // return guessC;
+  /**
+  * Calls CalcYield and returns formatted version of the result.
+  * @param  coupon coupon rate
+  * @param  years  number of years to maturity
+  * @param  face   face value
+  * @param  price  price of bond
+  * @return        formatted bond yield
+  */
+  public String prettyCalcYield(double coupon, int years, double face, double price) {
+    double yield = CalcYield(coupon, years, face, price);
+    return stringify(yield, DECIMAL_ACCURACY);
   }
 
   /**
@@ -190,10 +167,20 @@ public class BondYieldCalculator {
 
     double totalCouponPayment = calcTotalCouponPaymentValue(coupon, years, face, rate);
     double principalPaymentValue = calcPrincipalPaymentValue(years, face, rate);
-    // System.out.println("cp " + totalCouponPayment);
-    // System.out.println("pp " + principalPaymentValue);
-    // System.out.println(totalCouponPayment + principalPaymentValue);
     return totalCouponPayment + principalPaymentValue;
+  }
+
+  /**
+  * Calls CalcPrice and returns a formatted string of result.
+  * @param  coupon coupon rate
+  * @param  years  number of years to maturity
+  * @param  face   face value
+  * @param  rate   discount rate
+  * @return        formatted bond price
+  */
+  public double prettyCalcPrice(double coupon, int years, double face, double rate) {
+    double price = CalcPrice(coupon, years, face, rate);
+    return stringify(yield, DECIMAL_ACCURACY);
   }
 
   /**
@@ -207,7 +194,6 @@ public class BondYieldCalculator {
   */
   private double calcPrincipalPaymentValue(int years, double face, double rate) {
     double discount = calcValueModifier(years, rate);
-
     return face / discount;
   }
 
@@ -263,9 +249,6 @@ public class BondYieldCalculator {
     if (!memo.containsKey(years)) {
       double previousCouponPayment = calcCouponPaymentValue(cf, years - 1, rate, memo);
       double currentCouponPayment = previousCouponPayment + cf / calcValueModifier(years, rate);
-      // System.out.printf("%f %d %f %f \n", cf, years, rate, currentCouponPayment);
-      // System.out.println(years);
-      // System.out.println(currentCouponPayment);
       memo.put(years, currentCouponPayment);
     }
 
