@@ -12,10 +12,17 @@ public class BondYieldCalculator {
    * made up until a specified year.
    * Values here can then be added to the value of
    * principal payments to get the price of a bond.
-   * key: list(C = cF, rate)
+   * key: CouponKey(cF, rate)
    * val: HashMap<year, price>
    */
   private HashMap<CouponKey, HashMap<Integer, Double>> couponMemo;
+
+  /*
+   * Memo to keep track of yields based on coupon, years
+   * face value, and price.
+   * key: YieldKey(coupon, years, face, price)
+   * val: yield
+   */
   private HashMap<YieldKey, Double> yieldMemo;
 
   /**
@@ -70,8 +77,8 @@ public class BondYieldCalculator {
     double guessB = -1.0 + ACCURACY; /* rate = -1 is asymptotic and would give divide by 0 */
     double guessC = 0.0;
 
-    double priceA = calcPriceHelper(coupon, years, face, guessA) - price;
-    double priceB = calcPriceHelper(coupon, years, face, guessB) - price;
+    double priceA = CalcPrice(coupon, years, face, guessA) - price;
+    double priceB = CalcPrice(coupon, years, face, guessB) - price;
     double priceC;
 
     int direction = 1;
@@ -87,10 +94,10 @@ public class BondYieldCalculator {
         guessA = -5.0;
         guessB = -1.0 - ACCURACY;       /* -1.0 will never have a value */
         direction = -1;
-        priceA = calcPriceHelper(coupon, years, face, guessA) - price;
-        priceB = calcPriceHelper(coupon, years, face, guessB) - price;
+        priceA = CalcPrice(coupon, years, face, guessA) - price;
+        priceB = CalcPrice(coupon, years, face, guessB) - price;
       } else {
-        return Double.NEGATIVE_INFINITY;
+        return Double.NaN;
       }
     }
 
@@ -101,13 +108,13 @@ public class BondYieldCalculator {
     }
 
     guessC = (guessA + guessB) / 2;                /* get mid point */
-    priceC = calcPriceHelper(coupon, years, face, guessC) - price;
+    priceC = CalcPrice(coupon, years, face, guessC) - price;
 
     int counter = 0;
     while (Math.abs(priceC) >= ACCURACY ) {
       if (Double.isNaN(priceB)) {
         guessB += ACCURACY * direction;
-        priceB = calcPriceHelper(coupon, years, face, guessB) - price;
+        priceB = CalcPrice(coupon, years, face, guessB) - price;
       } else {
         if (priceA * priceC < 0) {
           guessB = guessC;
@@ -118,7 +125,7 @@ public class BondYieldCalculator {
         }
       }
       guessC = (guessA + guessB) / 2;                /* get mid point */
-      priceC = calcPriceHelper(coupon, years, face, guessC) - price;
+      priceC = CalcPrice(coupon, years, face, guessC) - price;
       counter++;
     }
 
@@ -135,6 +142,9 @@ public class BondYieldCalculator {
   */
   public String prettyCalcYield(double coupon, int years, double face, double price) {
     double yield = CalcYield(coupon, years, face, price);
+    if (Double.isNaN(yield)) {
+      return "Combination of parameters resulted in a calculation that produced a number too large for current machine to handle";
+    }
     return stringify(yield, DECIMAL_ACCURACY);
   }
 
@@ -149,19 +159,6 @@ public class BondYieldCalculator {
   * @return        price of bond
   */
   public double CalcPrice(double coupon, int years, double face, double rate) {
-    /*
-     * Call helper method to calculate price.
-     * Use BigDecimal to remove values beyond 10e-7.
-     */
-    double rawDouble = calcPriceHelper(coupon, years, face, rate);
-    BigDecimal price = new BigDecimal(rawDouble);
-    price = price.setScale(DECIMAL_ACCURACY, RoundingMode.HALF_UP);
-
-    return price.doubleValue();
-  }
-
-  // return to private
-  public double calcPriceHelper(double coupon, int years, double face, double rate) {
     /* Special case when years = 0: return the face value */
     if (years == 0) { return face; }
 
@@ -180,6 +177,10 @@ public class BondYieldCalculator {
   */
   public String prettyCalcPrice(double coupon, int years, double face, double rate) {
     double price = CalcPrice(coupon, years, face, rate);
+    if (Double.isNaN(price)) {
+      return "Combination of parameters resulted in a calculation that produced a number too large for current machine to handle";
+    }
+
     return stringify(price, DECIMAL_ACCURACY);
   }
 
