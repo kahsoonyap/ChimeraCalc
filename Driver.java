@@ -42,19 +42,19 @@ public class Driver {
     System.out.println("======================= Automate =======================");
     randomizedTests(5000, calc);
     // calc.CalcYield(0.078680, 7, 48912.364471, 978454.949250);
-    // System.out.println(calc.calcPriceHelper(0.10, 5, 1000, -1.15));
+    // System.out.println(calc.CalcPrice(0.10, 5, 1000, -1.15));
 
-    // System.out.println(calc.calcPriceHelper(0.10, 5, 1000, -0.15));
+    // System.out.println(calc.CalcPrice(0.10, 5, 1000, -0.15));
     // System.out.println(calc.CalcYield(0.10, 5, 1000, 3089.580147859961));
-    // System.out.println(calc.calcPriceHelper(0.10, 6, 1000, -0.15));
+    // System.out.println(calc.CalcPrice(0.10, 6, 1000, -0.15));
     // System.out.println(calc.CalcYield(0.10, 6, 1000, 3752.447232776425));
-    // System.out.println(calc.calcPriceHelper(0.10, 6, 1000, -1.15));
-    // System.out.println(calc.calcPriceHelper(0.10, 6, 1000, -0.8493001111279779));
+    // System.out.println(calc.CalcPrice(0.10, 6, 1000, -1.15));
+    // System.out.println(calc.CalcPrice(0.10, 6, 1000, -0.8493001111279779));
     // System.out.println(calc.CalcYield(0.10, 6, 1000, 95425451.303315535));
 
     // System.out.println(calc.CalcYield(0.948123, 62, 441301.903208, 21122.239053));
-    // System.out.println(calc.calcPriceHelper(0.948123, 62, 441301.903208, 19.80843));
-    // System.out.println(calc.calcPriceHelper(0.948123, 62, 441301.903208, -2.0169683933461027));
+    // System.out.println(calc.CalcPrice(0.948123, 62, 441301.903208, 19.80843));
+    // System.out.println(calc.CalcPrice(0.948123, 62, 441301.903208, -2.0169683933461027));
 
     // System.out.println(calc.CalcYield(0.682333, 61, 989325.664565, 75064.401150));
     // System.out.println(calc.CalcYield(0.591907, 86, 66494.903672, 920862.257603));
@@ -106,11 +106,11 @@ public class Driver {
       face = rand.nextDouble() * 1000000;
       price = rand.nextDouble() * 1000000;
       rate = calc.CalcYield(coupon, years, face, price);
-      double p = calc.calcPriceHelper(coupon, years, face, rate);
-      // System.out.printf("calc.CalcYield(%f, %d, %f, %f);\n", coupon, years, face, price);
+      double p = calc.CalcPrice(coupon, years, face, rate);
+      System.out.printf("calc.CalcYield(%f, %d, %f, %f);\n", coupon, years, face, price);
       // System.out.println(rate);
       // System.out.println("" + p + " " + price);
-      noErrors = Math.abs(p - price) < 0.0000001 || rate == Double.NEGATIVE_INFINITY;
+      noErrors = Math.abs(p - price) < 0.0000001 || Double.isNaN(rate);
       // System.out.println(n);
       // System.out.printf("calc.CalcYield(%f, %d, %f, %f);\n", coupon, years, face, price);
       if (!noErrors) {
