@@ -32,7 +32,7 @@ public class BondYieldCalculator {
     couponMemo = new HashMap<CouponKey, HashMap<Integer, Double>>();
     yieldMemo = new HashMap<YieldKey, Double>();
   }
-  
+
   /**
   * Calculates the yield of a bond using the bisection method given
   * the coupon rate, the years to maturity, the face value, and

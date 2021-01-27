@@ -65,7 +65,6 @@ public class BondYieldCalculatorConsole {
             line = reader.readLine();
             System.out.println("");
           } catch(IOException e) {
-            System.out.println(e);
             System.out.println("Error reading in parameters");
             continue;
           }
@@ -95,18 +94,22 @@ public class BondYieldCalculatorConsole {
 
             /* Parse for params then calculate */
             if (!doubleSpace) {
-              double coupon = Double.parseDouble(params[0]);
-              int years = Integer.parseInt(params[1]);
-              double face = Double.parseDouble(params[2]);
-
-              if (choice.equals("p")) {
-                double rate = Double.parseDouble(params[3]);
-                System.out.println(calc.prettyCalcPrice(coupon, years, face, rate));
-              } else {
-                double price = Double.parseDouble(params[3]);
-                System.out.println(calc.prettyCalcYield(coupon, years, face, price));
+              try {
+                double coupon = Double.parseDouble(params[0]);
+                int years = Integer.parseInt(params[1]);
+                double face = Double.parseDouble(params[2]);
+                if (choice.equals("p")) {
+                  double rate = Double.parseDouble(params[3]);
+                  System.out.println(calc.prettyCalcPrice(coupon, years, face, rate));
+                } else {
+                  double price = Double.parseDouble(params[3]);
+                  System.out.println(calc.prettyCalcYield(coupon, years, face, price));
+                }
+                paramDone = true;
+              } catch (NumberFormatException e) {
+                System.out.println("Non-number parameter given.");
+                System.out.println("Please reenter parameters");
               }
-              paramDone = true;
             }
           }
           System.out.println("");
@@ -126,7 +129,7 @@ public class BondYieldCalculatorConsole {
         System.out.println(e);
         System.out.println("Failed to close buffer reader");
       }
-      
+
     } catch (Exception e) {
       System.out.println(e);
       System.out.println("Error opening input stream reader or buffer reader");
