@@ -32,14 +32,7 @@ public class BondYieldCalculator {
     couponMemo = new HashMap<CouponKey, HashMap<Integer, Double>>();
     yieldMemo = new HashMap<YieldKey, Double>();
   }
-
-  // http://www.columbia.edu/~ks20/FE-Notes/4700-07-Notes-bonds.pdf
-  // https://financeformulas.net/Yield_to_Maturity.html
-  // http://phillipmfeldman.org/Python/roots/find_roots.html#:~:text=Abstract,the%20Newton%2DRaphson%20method).
-  // https://www.sciencedirect.com/science/article/pii/S0893965903901194#:~:text=Standard%20text%20books%20in%20numerical,the%20secant%20method%20becomes%20linear.
-  // why guess is 0+
-  // https://www.investopedia.com/ask/answers/062315/what-does-negative-bond-yield-mean.asp#:~:text=Since%20the%20YTM%20calculation%20incorporates,sufficiently%20outweigh%20the%20initial%20investment.
-
+  
   /**
   * Calculates the yield of a bond using the bisection method given
   * the coupon rate, the years to maturity, the face value, and
